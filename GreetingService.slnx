@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/GreetingService.Cli/GreetingService.Cli.csproj" />
     <Project Path="src/GreetingService.Core/GreetingService.Core.csproj" />
   </Folder>
   <Folder Name="/tests/">

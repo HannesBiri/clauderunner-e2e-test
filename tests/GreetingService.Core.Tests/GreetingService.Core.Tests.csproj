@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\GreetingService.Cli\GreetingService.Cli.csproj" />
     <ProjectReference Include="..\..\src\GreetingService.Core\GreetingService.Core.csproj" />
   </ItemGroup>
 
