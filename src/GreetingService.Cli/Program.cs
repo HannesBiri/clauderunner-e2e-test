@@ -31,5 +31,16 @@ public static class Program
         return Greeting.For(name, template ?? environmentTemplate);
     }
 
-    public static void Main(string[] args) => Console.WriteLine(Compose(args));
+    public static string Run(string[] args, string? environmentTemplate, string historyPath, DateTimeOffset printedAt)
+    {
+        var greeting = Compose(args, environmentTemplate);
+        GreetingHistory.Record(historyPath, new GreetingHistoryEntry(greeting, printedAt));
+        return greeting;
+    }
+
+    public static void Main(string[] args) => Console.WriteLine(Run(
+        args,
+        Environment.GetEnvironmentVariable("GREETING_TEMPLATE"),
+        GreetingHistory.ResolvePath(),
+        DateTimeOffset.UtcNow));
 }
