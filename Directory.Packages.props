@@ -1,0 +1,14 @@
+<Project>
+
+  <!--
+    Stops MSBuild's upward search for Directory.Packages.props at this repository's
+    root. Without this file here, the search walks past this repository into the
+    tooling that checks it out into a worktree and picks up its Directory.Packages.props,
+    which turns on central package management for projects here that were never
+    written against it.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+</Project>
