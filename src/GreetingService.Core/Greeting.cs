@@ -19,7 +19,11 @@ public static class Greeting
     public static string For(string? name, string? template)
     {
         var resolvedTemplate = string.IsNullOrWhiteSpace(template) ? DefaultTemplate : template;
-        var resolvedName = string.IsNullOrWhiteSpace(name) ? DefaultName : name.Trim();
+        var resolvedName = ResolveName(name);
         return resolvedTemplate.Replace("{name}", resolvedName, StringComparison.Ordinal);
     }
+
+    /// <summary>Resolves <paramref name="name"/> to <see cref="DefaultName"/> when it is null or whitespace, otherwise to its trimmed value.</summary>
+    public static string ResolveName(string? name) =>
+        string.IsNullOrWhiteSpace(name) ? DefaultName : name.Trim();
 }

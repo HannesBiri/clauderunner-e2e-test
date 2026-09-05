@@ -45,4 +45,25 @@ public class GreetingTests
     {
         Assert.Equal("Welcome aboard", Greeting.For("Hannes", "Welcome aboard"));
     }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void ResolveNameFallsBackToTheDefaultNameWhenNullOrWhitespace(string? name)
+    {
+        Assert.Equal("World", Greeting.ResolveName(name));
+    }
+
+    [Fact]
+    public void ResolveNameTrimsSurroundingWhitespace()
+    {
+        Assert.Equal("Hannes", Greeting.ResolveName("  Hannes  "));
+    }
+
+    [Fact]
+    public void ResolveNameReturnsANameThatNeedsNoResolutionUnchanged()
+    {
+        Assert.Equal("Hannes", Greeting.ResolveName("Hannes"));
+    }
 }
