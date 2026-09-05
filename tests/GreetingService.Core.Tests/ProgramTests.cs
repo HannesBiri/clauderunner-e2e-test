@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using GreetingService.Cli;
 
 namespace GreetingService.Core.Tests;
@@ -58,5 +59,35 @@ public class ProgramTests
         Assert.Equal(
             "Hi, Hannes!!",
             Program.Compose(["Hannes", "--greeting", "Hi, {name}!!"], "Yo, {name}!!!"));
+    }
+
+    [Fact]
+    public void ReportsItsVersion()
+    {
+        Assert.Equal(Program.Version, Program.Compose(["--version"], null));
+    }
+
+    [Fact]
+    public void PrefersTheVersionOptionOverAName()
+    {
+        Assert.Equal(Program.Version, Program.Compose(["Hannes", "--version"], null));
+    }
+
+    [Fact]
+    public void PrefersTheVersionOptionOverTheGreetingOption()
+    {
+        Assert.Equal(Program.Version, Program.Compose(["--version", "--greeting", "Hi, {name}!!"], null));
+    }
+
+    [Fact]
+    public void TreatsTheVersionOptionAsTheGreetingValueWhenItFollowsTheGreetingOption()
+    {
+        Assert.Equal("--version", Program.Compose(["Hannes", "--greeting", "--version"], null));
+    }
+
+    [Fact]
+    public void HasAVersionMatchingSemanticVersioningFormat()
+    {
+        Assert.Matches(new Regex(@"^\d+\.\d+\.\d+$"), Program.Version);
     }
 }
