@@ -4,10 +4,14 @@ namespace GreetingService.Cli;
 
 public static class Program
 {
-    public static string Compose(string[] args) =>
+    private const string LetterOrDigitRequiredMessage = "greet: a name must contain at least one letter or digit";
+    private const string NameTooLongMessage = "greet: a name must be 64 characters or fewer";
+    private const int MaxNameLength = 64;
+
+    public static ComposeResult Compose(string[] args) =>
         Compose(args, Environment.GetEnvironmentVariable("GREETING_TEMPLATE"));
 
-    public static string Compose(string[] args, string? environmentTemplate)
+    public static ComposeResult Compose(string[] args, string? environmentTemplate)
     {
         string? name = null;
         string? template = null;
@@ -28,8 +32,42 @@ public static class Program
             }
         }
 
-        return Greeting.For(name, template ?? environmentTemplate);
+        var resolvedTemplate = template ?? environmentTemplate;
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return new ComposeResult(Greeting.For(null, resolvedTemplate), null);
+        }
+
+        var trimmedName = name.Trim();
+
+        if (!trimmedName.Any(char.IsLetterOrDigit))
+        {
+            return new ComposeResult(null, LetterOrDigitRequiredMessage);
+        }
+
+        if (trimmedName.Length > MaxNameLength)
+        {
+            return new ComposeResult(null, NameTooLongMessage);
+        }
+
+        return new ComposeResult(Greeting.For(trimmedName, resolvedTemplate), null);
     }
 
-    public static void Main(string[] args) => Console.WriteLine(Compose(args));
+    public static int Run(string[] args, string? environmentTemplate, TextWriter output, TextWriter error)
+    {
+        var result = Compose(args, environmentTemplate);
+
+        if (result.Error is not null)
+        {
+            error.WriteLine(result.Error);
+            return 2;
+        }
+
+        output.WriteLine(result.Greeting);
+        return 0;
+    }
+
+    public static int Main(string[] args) =>
+        Run(args, Environment.GetEnvironmentVariable("GREETING_TEMPLATE"), Console.Out, Console.Error);
 }
