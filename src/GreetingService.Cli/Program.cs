@@ -13,7 +13,7 @@ public static class Program
 
     public static ComposeResult Compose(string[] args, string? environmentTemplate)
     {
-        string? name = null;
+        var names = new List<string>();
         string? template = null;
 
         for (var i = 0; i < args.Length; i++)
@@ -26,32 +26,53 @@ public static class Program
                     i++;
                 }
             }
-            else if (name is null)
+            else
             {
-                name = args[i];
+                names.Add(args[i]);
             }
         }
 
         var resolvedTemplate = template ?? environmentTemplate;
 
-        if (string.IsNullOrWhiteSpace(name))
+        var distinctNames = new List<string>();
+        foreach (var name in names)
+        {
+            var trimmedName = name.Trim();
+
+            if (trimmedName.Length == 0)
+            {
+                continue;
+            }
+
+            if (!distinctNames.Contains(trimmedName, StringComparer.Ordinal))
+            {
+                distinctNames.Add(trimmedName);
+            }
+        }
+
+        if (distinctNames.Count == 0)
         {
             return new ComposeResult(Greeting.For(null, resolvedTemplate), null);
         }
 
-        var trimmedName = name.Trim();
-
-        if (!trimmedName.Any(char.IsLetterOrDigit))
+        foreach (var trimmedName in distinctNames)
         {
-            return new ComposeResult(null, LetterOrDigitRequiredMessage);
+            if (!trimmedName.Any(char.IsLetterOrDigit))
+            {
+                return new ComposeResult(null, LetterOrDigitRequiredMessage);
+            }
+
+            if (trimmedName.Length > MaxNameLength)
+            {
+                return new ComposeResult(null, NameTooLongMessage);
+            }
         }
 
-        if (trimmedName.Length > MaxNameLength)
-        {
-            return new ComposeResult(null, NameTooLongMessage);
-        }
+        var greeting = string.Join(
+            Environment.NewLine,
+            distinctNames.Select(trimmedName => Greeting.For(trimmedName, resolvedTemplate)));
 
-        return new ComposeResult(Greeting.For(trimmedName, resolvedTemplate), null);
+        return new ComposeResult(greeting, null);
     }
 
     public static int Run(string[] args, string? environmentTemplate, TextWriter output, TextWriter error)

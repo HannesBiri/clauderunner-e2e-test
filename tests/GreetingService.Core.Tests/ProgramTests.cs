@@ -23,9 +23,65 @@ public class ProgramTests
     }
 
     [Fact]
-    public void IgnoresExtraArguments()
+    public void TreatsEveryArgumentAsAName()
     {
-        Assert.Equal("Hello, Hannes!", Program.Compose(["Hannes", "extra"]).Greeting);
+        Assert.Equal(
+            "Hello, Hannes!" + Environment.NewLine + "Hello, extra!",
+            Program.Compose(["Hannes", "extra"]).Greeting);
+    }
+
+    [Fact]
+    public void GreetsARepeatedNameOnceAtItsFirstPosition()
+    {
+        Assert.Equal(
+            "Hello, Ada!" + Environment.NewLine + "Hello, Grace!",
+            Program.Compose(["Ada", "Grace", "Ada"]).Greeting);
+    }
+
+    [Fact]
+    public void GreetsNamesDifferingOnlyByCaseSeparately()
+    {
+        Assert.Equal(
+            "Hello, Ada!" + Environment.NewLine + "Hello, ada!",
+            Program.Compose(["Ada", "ada"]).Greeting);
+    }
+
+    [Fact]
+    public void CollapsesARepeatThatDiffersOnlyByWhitespaceOntoTheEarlierOccurrence()
+    {
+        Assert.Equal(
+            "Hello, Ada!" + Environment.NewLine + "Hello, Grace!",
+            Program.Compose(["Ada", "Grace", "  Ada  "]).Greeting);
+    }
+
+    [Fact]
+    public void DiscardsWhitespaceOnlyArgumentsAmongSeveralNames()
+    {
+        Assert.Equal(
+            "Hello, Ada!" + Environment.NewLine + "Hello, Grace!",
+            Program.Compose(["Ada", "   ", "Grace"]).Greeting);
+    }
+
+    [Fact]
+    public void FailsTheWholeRunWhenAnyNameFailsValidation()
+    {
+        var result = Program.Compose(["Ada", "!!!"]);
+
+        Assert.Null(result.Greeting);
+        Assert.Equal("greet: a name must contain at least one letter or digit", result.Error);
+    }
+
+    [Fact]
+    public void RunFailsTheWholeRunWhenAnyNameFailsValidation()
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var exitCode = Program.Run(["Ada", "!!!"], null, output, error);
+
+        Assert.Equal(2, exitCode);
+        Assert.Equal("greet: a name must contain at least one letter or digit" + Environment.NewLine, error.ToString());
+        Assert.Equal("", output.ToString());
     }
 
     [Fact]
