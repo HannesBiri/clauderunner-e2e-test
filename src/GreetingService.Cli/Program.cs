@@ -34,9 +34,11 @@ public static class Program
 
         var resolvedTemplate = template ?? environmentTemplate;
 
+        // `Greeting` is fully qualified throughout this method: the Greeting.Tools.Core package puts a `Greeting`
+        // *namespace* in scope, which would otherwise win over the class of the same name.
         if (string.IsNullOrWhiteSpace(name))
         {
-            return new ComposeResult(Greeting.For(null, resolvedTemplate), null);
+            return new ComposeResult(GreetingService.Core.Greeting.For(null, resolvedTemplate), null);
         }
 
         var trimmedName = name.Trim();
@@ -51,7 +53,7 @@ public static class Program
             return new ComposeResult(null, NameTooLongMessage);
         }
 
-        return new ComposeResult(Greeting.For(trimmedName, resolvedTemplate), null);
+        return new ComposeResult(GreetingService.Core.Greeting.For(trimmedName, resolvedTemplate), null);
     }
 
     public static int Run(string[] args, string? environmentTemplate, TextWriter output, TextWriter error)

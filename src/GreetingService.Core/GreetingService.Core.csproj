@@ -1,9 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <!--
+    Consumed as a published package rather than a project reference, on purpose: the two live in separate
+    repositories, so a change to the rendering helpers cannot reach this one until it is packed and published.
+    Bumping this version is what a ticket spanning both repositories has to wait for.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Greeting.Tools.Core" Version="1.0.0" />
+  </ItemGroup>
 
 </Project>
