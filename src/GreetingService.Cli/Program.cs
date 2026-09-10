@@ -1,3 +1,4 @@
+using System.Reflection;
 using GreetingService.Core;
 
 namespace GreetingService.Cli;
@@ -7,6 +8,25 @@ public static class Program
     private const string LetterOrDigitRequiredMessage = "greet: a name must contain at least one letter or digit";
     private const string NameTooLongMessage = "greet: a name must be 64 characters or fewer";
     private const int MaxNameLength = 64;
+
+    public static string Version { get; } = ResolveVersion();
+
+    private static string ResolveVersion()
+    {
+        var assembly = typeof(Program).Assembly;
+
+        var informationalVersion = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion;
+
+        if (!string.IsNullOrEmpty(informationalVersion))
+        {
+            var plusIndex = informationalVersion.IndexOf('+');
+            return plusIndex < 0 ? informationalVersion : informationalVersion[..plusIndex];
+        }
+
+        return assembly.GetName().Version?.ToString() ?? "0.0.0";
+    }
 
     public static ComposeResult Compose(string[] args) =>
         Compose(args, Environment.GetEnvironmentVariable("GREETING_TEMPLATE"));
@@ -58,6 +78,12 @@ public static class Program
 
     public static int Run(string[] args, string? environmentTemplate, TextWriter output, TextWriter error)
     {
+        if (args.Contains("--version", StringComparer.Ordinal))
+        {
+            output.WriteLine(Version);
+            return 0;
+        }
+
         var result = Compose(args, environmentTemplate);
 
         if (result.Error is not null)

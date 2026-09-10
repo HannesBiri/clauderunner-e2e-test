@@ -178,4 +178,63 @@ public class ProgramTests
         Assert.Equal("greet: a name must be 64 characters or fewer" + Environment.NewLine, error.ToString());
         Assert.Equal("", output.ToString());
     }
+
+    [Fact]
+    public void RunPrintsTheVersionAndReturnsExitCode0WhenVersionIsTheOnlyArgument()
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var exitCode = Program.Run(["--version"], null, output, error);
+
+        Assert.Equal(0, exitCode);
+        Assert.Equal(Program.Version + Environment.NewLine, output.ToString());
+        Assert.Equal("", error.ToString());
+    }
+
+    [Fact]
+    public void RunPrintsTheVersionAndNoGreetingWhenVersionIsGivenAlongsideAValidName()
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var exitCode = Program.Run(["Hannes", "--version"], null, output, error);
+
+        Assert.Equal(0, exitCode);
+        Assert.Equal(Program.Version + Environment.NewLine, output.ToString());
+        Assert.Equal("", error.ToString());
+    }
+
+    [Fact]
+    public void RunPrintsTheVersionWithExitCode0EvenWhenTheOtherArgumentWouldOtherwiseBeRejected()
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var exitCode = Program.Run(["!!!", "--version"], null, output, error);
+
+        Assert.Equal(0, exitCode);
+        Assert.Equal(Program.Version + Environment.NewLine, output.ToString());
+        Assert.Equal("", error.ToString());
+    }
+
+    [Fact]
+    public void RunPrintsTheVersionWithExitCode0EvenWhenAnOverLengthNameWouldOtherwiseBeRejected()
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var exitCode = Program.Run([new string('a', 65), "--version"], null, output, error);
+
+        Assert.Equal(0, exitCode);
+        Assert.Equal(Program.Version + Environment.NewLine, output.ToString());
+        Assert.Equal("", error.ToString());
+    }
+
+    [Fact]
+    public void VersionIsNonEmptyAndCarriesNoBuildMetadataSuffix()
+    {
+        Assert.False(string.IsNullOrEmpty(Program.Version));
+        Assert.DoesNotContain('+', Program.Version);
+    }
 }
