@@ -42,7 +42,10 @@ public static class Program
             return [new ComposeResult(null, $"greet: cannot read names file '{filePath}'")];
         }
 
-        return lines.Select(line => ComposeOne(line, resolvedTemplate)).ToList();
+        return lines
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .Select(line => ComposeOne(line, resolvedTemplate))
+            .ToList();
     }
 
     private static (string? Name, string? Template, string? FilePath) ParseArgs(string[] args)

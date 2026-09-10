@@ -200,13 +200,13 @@ public class ProgramTests
     }
 
     [Fact]
-    public void ComposeAllGreetsABlankLineAsTheDefaultWorldGreeting()
+    public void ComposeAllSkipsABlankLineInTheMiddleOfTheFile()
     {
         Func<string, string[]> readLines = _ => ["Hannes", "", "Werner"];
 
         var results = Program.ComposeAll(["--file", "names.txt"], null, readLines);
 
-        Assert.Equal(["Hello, Hannes!", "Hello, World!", "Hello, Werner!"], results.Select(r => r.Greeting));
+        Assert.Equal(["Hello, Hannes!", "Hello, Werner!"], results.Select(r => r.Greeting));
     }
 
     [Fact]
@@ -293,16 +293,16 @@ public class ProgramTests
     }
 
     [Fact]
-    public void RunGreetsABlankLineInTheFileAsTheDefaultGreeting()
+    public void RunSkipsABlankLineInTheMiddleOfTheFile()
     {
         var output = new StringWriter();
         var error = new StringWriter();
-        Func<string, string[]> readLines = _ => ["Hannes", ""];
+        Func<string, string[]> readLines = _ => ["Hannes", "", "Werner"];
 
         var exitCode = Program.Run(["--file", "names.txt"], null, output, error, readLines);
 
         Assert.Equal(0, exitCode);
-        Assert.Equal("Hello, Hannes!" + Environment.NewLine + "Hello, World!" + Environment.NewLine, output.ToString());
+        Assert.Equal("Hello, Hannes!" + Environment.NewLine + "Hello, Werner!" + Environment.NewLine, output.ToString());
         Assert.Equal("", error.ToString());
     }
 
