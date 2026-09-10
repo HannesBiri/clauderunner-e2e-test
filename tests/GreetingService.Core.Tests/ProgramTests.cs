@@ -185,7 +185,7 @@ public class ProgramTests
         var result = Program.Compose(["Hannes", "--greeting", "Good morning"], null);
 
         Assert.Null(result.Greeting);
-        Assert.Equal("greet: a greeting template must contain {name}", result.Error);
+        Assert.Equal("greet: a greeting template must contain {name}: \"Good morning\"", result.Error);
     }
 
     [Fact]
@@ -194,7 +194,7 @@ public class ProgramTests
         var result = Program.Compose(["Hannes"], "Good morning");
 
         Assert.Null(result.Greeting);
-        Assert.Equal("greet: a greeting template must contain {name}", result.Error);
+        Assert.Equal("greet: a greeting template must contain {name}: \"Good morning\"", result.Error);
     }
 
     [Fact]
@@ -203,7 +203,7 @@ public class ProgramTests
         var result = Program.Compose(["--greeting", "Good morning"], null);
 
         Assert.Null(result.Greeting);
-        Assert.Equal("greet: a greeting template must contain {name}", result.Error);
+        Assert.Equal("greet: a greeting template must contain {name}: \"Good morning\"", result.Error);
     }
 
     [Fact]
@@ -221,7 +221,9 @@ public class ProgramTests
         var exitCode = Program.Run(["Hannes", "--greeting", "Good morning"], null, output, error);
 
         Assert.Equal(2, exitCode);
-        Assert.Equal("greet: a greeting template must contain {name}" + Environment.NewLine, error.ToString());
+        Assert.Equal(
+            "greet: a greeting template must contain {name}: \"Good morning\"" + Environment.NewLine,
+            error.ToString());
         Assert.Equal("", output.ToString());
     }
 }

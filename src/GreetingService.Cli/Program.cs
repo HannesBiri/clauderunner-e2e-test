@@ -6,8 +6,10 @@ public static class Program
 {
     private const string LetterOrDigitRequiredMessage = "greet: a name must contain at least one letter or digit";
     private const string NameTooLongMessage = "greet: a name must be 64 characters or fewer";
-    private const string TemplateMustContainNameMessage = "greet: a greeting template must contain {name}";
     private const int MaxNameLength = 64;
+
+    private static string TemplateMustContainNameMessage(string template) =>
+        $"greet: a greeting template must contain {{name}}: \"{template}\"";
 
     public static ComposeResult Compose(string[] args) =>
         Compose(args, Environment.GetEnvironmentVariable("GREETING_TEMPLATE"));
@@ -37,7 +39,7 @@ public static class Program
 
         if (!string.IsNullOrWhiteSpace(resolvedTemplate) && !resolvedTemplate.Contains("{name}", StringComparison.Ordinal))
         {
-            return new ComposeResult(null, TemplateMustContainNameMessage);
+            return new ComposeResult(null, TemplateMustContainNameMessage(resolvedTemplate));
         }
 
         // `Greeting` is fully qualified throughout this method: the Greeting.Tools.Core package puts a `Greeting`
