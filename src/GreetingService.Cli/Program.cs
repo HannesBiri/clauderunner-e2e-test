@@ -37,7 +37,7 @@ public static class Program
         {
             lines = readLines(filePath);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
             return [new ComposeResult(null, $"greet: cannot read names file '{filePath}'")];
         }

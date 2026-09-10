@@ -232,6 +232,17 @@ public class ProgramTests
     }
 
     [Fact]
+    public void ComposeAllReturnsASingleErrorResultWhenTheFilePathIsUnusable()
+    {
+        Func<string, string[]> readLines = _ => throw new ArgumentException();
+
+        var results = Program.ComposeAll(["--file", ""], null, readLines);
+
+        Assert.Single(results);
+        Assert.Equal("greet: cannot read names file ''", results[0].Error);
+    }
+
+    [Fact]
     public void ComposeAllAppliesTheGreetingOptionToEveryLine()
     {
         Func<string, string[]> readLines = _ => ["Hannes", "Ilse"];
