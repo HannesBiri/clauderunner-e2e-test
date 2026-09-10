@@ -237,4 +237,34 @@ public class ProgramTests
         Assert.False(string.IsNullOrEmpty(Program.Version));
         Assert.DoesNotContain('+', Program.Version);
     }
+
+    [Fact]
+    public void VersionParsesAsAValidSystemVersion()
+    {
+        Assert.True(System.Version.TryParse(Program.Version, out _));
+    }
+
+    [Fact]
+    public void ResolveVersionStripsBuildMetadataFromTheInformationalVersion()
+    {
+        Assert.Equal("1.2.3", Program.ResolveVersion("1.2.3+abcdef0", new Version(9, 9, 9)));
+    }
+
+    [Fact]
+    public void ResolveVersionUsesTheInformationalVersionWhenItCarriesNoBuildMetadata()
+    {
+        Assert.Equal("1.2.3", Program.ResolveVersion("1.2.3", new Version(9, 9, 9)));
+    }
+
+    [Fact]
+    public void ResolveVersionFallsBackToTheAssemblyVersionWhenNoInformationalVersionIsPresent()
+    {
+        Assert.Equal("9.9.9", Program.ResolveVersion(null, new Version(9, 9, 9)));
+    }
+
+    [Fact]
+    public void ResolveVersionFallsBackToZeroWhenNeitherVersionIsPresent()
+    {
+        Assert.Equal("0.0.0", Program.ResolveVersion(null, null));
+    }
 }

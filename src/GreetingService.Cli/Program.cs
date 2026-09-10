@@ -9,23 +9,19 @@ public static class Program
     private const string NameTooLongMessage = "greet: a name must be 64 characters or fewer";
     private const int MaxNameLength = 64;
 
-    public static string Version { get; } = ResolveVersion();
+    public static string Version { get; } = ResolveVersion(
+        typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion,
+        typeof(Program).Assembly.GetName().Version);
 
-    private static string ResolveVersion()
+    public static string ResolveVersion(string? informationalVersion, Version? assemblyVersion)
     {
-        var assembly = typeof(Program).Assembly;
-
-        var informationalVersion = assembly
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
-            .InformationalVersion;
-
         if (!string.IsNullOrEmpty(informationalVersion))
         {
             var plusIndex = informationalVersion.IndexOf('+');
             return plusIndex < 0 ? informationalVersion : informationalVersion[..plusIndex];
         }
 
-        return assembly.GetName().Version?.ToString() ?? "0.0.0";
+        return assemblyVersion?.ToString() ?? "0.0.0";
     }
 
     public static ComposeResult Compose(string[] args) =>
