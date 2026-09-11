@@ -23,15 +23,20 @@ public static class Program
         ParseArgs(args, out _, out var template, out var namesFile);
         var resolvedTemplate = template ?? environmentTemplate;
 
+        if (namesFile is null)
+        {
+            return new ComposeManyResult([], "greet: --names-file requires a path");
+        }
+
         string[] lines;
 
         try
         {
-            lines = readAllLines(namesFile!);
+            lines = readAllLines(namesFile);
         }
-        catch
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
-            return new ComposeManyResult([], $"greet: cannot read names file '{namesFile}'");
+            return new ComposeManyResult([], $"greet: cannot read names file '{namesFile}': {ex.Message}");
         }
 
         var greetings = new List<string>();

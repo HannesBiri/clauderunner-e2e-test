@@ -271,7 +271,16 @@ public class ProgramTests
             _ => throw new IOException("boom"));
 
         Assert.Empty(result.Greetings);
-        Assert.Equal("greet: cannot read names file 'missing.txt'", result.Error);
+        Assert.Equal("greet: cannot read names file 'missing.txt': boom", result.Error);
+    }
+
+    [Fact]
+    public void ComposeManyReportsAMissingNamesFileOptionWithoutBlamingAPath()
+    {
+        var result = Program.ComposeMany(["Hannes"], null, _ => ["ShouldNotBeCalled"]);
+
+        Assert.Empty(result.Greetings);
+        Assert.Equal("greet: --names-file requires a path", result.Error);
     }
 
     [Fact]
@@ -324,7 +333,7 @@ public class ProgramTests
             _ => throw new IOException("boom"));
 
         Assert.Equal(2, exitCode);
-        Assert.Equal("greet: cannot read names file 'missing.txt'" + Environment.NewLine, error.ToString());
+        Assert.Equal("greet: cannot read names file 'missing.txt': boom" + Environment.NewLine, error.ToString());
         Assert.Equal("", output.ToString());
     }
 
@@ -338,7 +347,31 @@ public class ProgramTests
         var exitCode = Program.Run(["--names-file", path], null, output, error);
 
         Assert.Equal(2, exitCode);
-        Assert.Equal($"greet: cannot read names file '{path}'" + Environment.NewLine, error.ToString());
+        Assert.StartsWith($"greet: cannot read names file '{path}': ", error.ToString());
         Assert.Equal("", output.ToString());
+    }
+
+    [Fact]
+    public void RunGreetsEveryLineOfARealNamesFileUsingTheDefaultReader()
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + "-names.txt");
+        File.WriteAllLines(path, ["Hannes", "Ada", "World"]);
+
+        try
+        {
+            var exitCode = Program.Run(["--names-file", path], null, output, error);
+
+            Assert.Equal(0, exitCode);
+            Assert.Equal(
+                "Hello, Hannes!" + Environment.NewLine + "Hello, Ada!" + Environment.NewLine + "Hello, World!" + Environment.NewLine,
+                output.ToString());
+            Assert.Equal("", error.ToString());
+        }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 }
