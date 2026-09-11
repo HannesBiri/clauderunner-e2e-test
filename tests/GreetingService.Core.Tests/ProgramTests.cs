@@ -178,4 +178,200 @@ public class ProgramTests
         Assert.Equal("greet: a name must be 64 characters or fewer" + Environment.NewLine, error.ToString());
         Assert.Equal("", output.ToString());
     }
+
+    [Fact]
+    public void ComposeManyGreetsEveryNameInFileOrderMatchingSingleNameGreetings()
+    {
+        var result = Program.ComposeMany(
+            ["--names-file", "names.txt"],
+            null,
+            _ => ["Hannes", "World", "Ada"]);
+
+        Assert.Null(result.Error);
+        Assert.Equal(
+            new[] { Program.Compose(["Hannes"]).Greeting!, Program.Compose(["World"]).Greeting!, Program.Compose(["Ada"]).Greeting! },
+            result.Greetings);
+    }
+
+    [Fact]
+    public void ComposeManyAppliesTheGreetingOptionToEveryLine()
+    {
+        var result = Program.ComposeMany(
+            ["--names-file", "names.txt", "--greeting", "Hi, {name}!!"],
+            null,
+            _ => ["Hannes", "Ada"]);
+
+        Assert.Null(result.Error);
+        Assert.Equal(["Hi, Hannes!!", "Hi, Ada!!"], result.Greetings);
+    }
+
+    [Fact]
+    public void ComposeManySkipsBlankAndWhitespaceOnlyLines()
+    {
+        var result = Program.ComposeMany(
+            ["--names-file", "names.txt"],
+            null,
+            _ => ["Hannes", "", "   ", "Ada", ""]);
+
+        Assert.Null(result.Error);
+        Assert.Equal(["Hello, Hannes!", "Hello, Ada!"], result.Greetings);
+    }
+
+    [Fact]
+    public void ComposeManyOnAFileOfOnlyBlankLinesProducesNoGreetingsAndNoError()
+    {
+        var result = Program.ComposeMany(
+            ["--names-file", "names.txt"],
+            null,
+            _ => ["", "   ", ""]);
+
+        Assert.Null(result.Error);
+        Assert.Empty(result.Greetings);
+    }
+
+    [Fact]
+    public void ComposeManyOnAnEmptyFileProducesNoGreetingsAndNoError()
+    {
+        var result = Program.ComposeMany(["--names-file", "names.txt"], null, _ => []);
+
+        Assert.Null(result.Error);
+        Assert.Empty(result.Greetings);
+    }
+
+    [Fact]
+    public void ComposeManyAbortsTheWholeRunWhenALineIsPunctuationOnly()
+    {
+        var result = Program.ComposeMany(
+            ["--names-file", "names.txt"],
+            null,
+            _ => ["Hannes", "!!!", "Ada"]);
+
+        Assert.Empty(result.Greetings);
+        Assert.Equal("greet: a name must contain at least one letter or digit", result.Error);
+    }
+
+    [Fact]
+    public void ComposeManyAbortsTheWholeRunWhenALineIs65Characters()
+    {
+        var result = Program.ComposeMany(
+            ["--names-file", "names.txt"],
+            null,
+            _ => ["Hannes", new string('a', 65)]);
+
+        Assert.Empty(result.Greetings);
+        Assert.Equal("greet: a name must be 64 characters or fewer", result.Error);
+    }
+
+    [Fact]
+    public void ComposeManyReportsAnUnreadableNamesFileByPath()
+    {
+        var result = Program.ComposeMany(
+            ["--names-file", "missing.txt"],
+            null,
+            _ => throw new IOException("boom"));
+
+        Assert.Empty(result.Greetings);
+        Assert.Equal("greet: cannot read names file 'missing.txt': boom", result.Error);
+    }
+
+    [Fact]
+    public void ComposeManyReportsAMissingNamesFileOptionWithoutBlamingAPath()
+    {
+        var result = Program.ComposeMany(["Hannes"], null, _ => ["ShouldNotBeCalled"]);
+
+        Assert.Empty(result.Greetings);
+        Assert.Equal("greet: --names-file requires a path", result.Error);
+    }
+
+    [Fact]
+    public void RunGreetsEveryLineOfANamesFileAndReturnsExitCode0()
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var exitCode = Program.Run(
+            ["--names-file", "names.txt"],
+            null,
+            output,
+            error,
+            _ => ["Hannes", "Ada"]);
+
+        Assert.Equal(0, exitCode);
+        Assert.Equal("Hello, Hannes!" + Environment.NewLine + "Hello, Ada!" + Environment.NewLine, output.ToString());
+        Assert.Equal("", error.ToString());
+    }
+
+    [Fact]
+    public void RunIgnoresAPositionalNameWhenANamesFileIsGiven()
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var exitCode = Program.Run(
+            ["IgnoredName", "--names-file", "names.txt"],
+            null,
+            output,
+            error,
+            _ => ["Hannes"]);
+
+        Assert.Equal(0, exitCode);
+        Assert.Equal("Hello, Hannes!" + Environment.NewLine, output.ToString());
+        Assert.Equal("", error.ToString());
+    }
+
+    [Fact]
+    public void RunReportsAnUnreadableNamesFileWithExitCode2AndNoStandardOutput()
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var exitCode = Program.Run(
+            ["--names-file", "missing.txt"],
+            null,
+            output,
+            error,
+            _ => throw new IOException("boom"));
+
+        Assert.Equal(2, exitCode);
+        Assert.Equal("greet: cannot read names file 'missing.txt': boom" + Environment.NewLine, error.ToString());
+        Assert.Equal("", output.ToString());
+    }
+
+    [Fact]
+    public void RunReportsANamesFilePathThatDoesNotExistUsingTheDefaultReader()
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + "-does-not-exist.txt");
+
+        var exitCode = Program.Run(["--names-file", path], null, output, error);
+
+        Assert.Equal(2, exitCode);
+        Assert.StartsWith($"greet: cannot read names file '{path}': ", error.ToString());
+        Assert.Equal("", output.ToString());
+    }
+
+    [Fact]
+    public void RunGreetsEveryLineOfARealNamesFileUsingTheDefaultReader()
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + "-names.txt");
+        File.WriteAllLines(path, ["Hannes", "Ada", "World"]);
+
+        try
+        {
+            var exitCode = Program.Run(["--names-file", path], null, output, error);
+
+            Assert.Equal(0, exitCode);
+            Assert.Equal(
+                "Hello, Hannes!" + Environment.NewLine + "Hello, Ada!" + Environment.NewLine + "Hello, World!" + Environment.NewLine,
+                output.ToString());
+            Assert.Equal("", error.ToString());
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
 }

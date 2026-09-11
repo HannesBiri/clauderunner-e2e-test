@@ -13,8 +13,59 @@ public static class Program
 
     public static ComposeResult Compose(string[] args, string? environmentTemplate)
     {
-        string? name = null;
-        string? template = null;
+        ParseArgs(args, out var name, out var template, out _);
+
+        return ComposeOne(name, template ?? environmentTemplate);
+    }
+
+    public static ComposeManyResult ComposeMany(string[] args, string? environmentTemplate, Func<string, string[]> readAllLines)
+    {
+        ParseArgs(args, out _, out var template, out var namesFile);
+        var resolvedTemplate = template ?? environmentTemplate;
+
+        if (namesFile is null)
+        {
+            return new ComposeManyResult([], "greet: --names-file requires a path");
+        }
+
+        string[] lines;
+
+        try
+        {
+            lines = readAllLines(namesFile);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return new ComposeManyResult([], $"greet: cannot read names file '{namesFile}': {ex.Message}");
+        }
+
+        var greetings = new List<string>();
+
+        foreach (var line in lines)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            var oneResult = ComposeOne(line, resolvedTemplate);
+
+            if (oneResult.Error is not null)
+            {
+                return new ComposeManyResult([], oneResult.Error);
+            }
+
+            greetings.Add(oneResult.Greeting!);
+        }
+
+        return new ComposeManyResult(greetings, null);
+    }
+
+    private static void ParseArgs(string[] args, out string? name, out string? template, out string? namesFile)
+    {
+        name = null;
+        template = null;
+        namesFile = null;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -26,16 +77,25 @@ public static class Program
                     i++;
                 }
             }
+            else if (args[i] == "--names-file")
+            {
+                if (i + 1 < args.Length)
+                {
+                    namesFile = args[i + 1];
+                    i++;
+                }
+            }
             else if (name is null)
             {
                 name = args[i];
             }
         }
+    }
 
-        var resolvedTemplate = template ?? environmentTemplate;
-
-        // `Greeting` is fully qualified throughout this method: the Greeting.Tools.Core package puts a `Greeting`
-        // *namespace* in scope, which would otherwise win over the class of the same name.
+    // `Greeting` is fully qualified throughout this method: the Greeting.Tools.Core package puts a `Greeting`
+    // *namespace* in scope, which would otherwise win over the class of the same name.
+    private static ComposeResult ComposeOne(string? name, string? resolvedTemplate)
+    {
         if (string.IsNullOrWhiteSpace(name))
         {
             return new ComposeResult(GreetingService.Core.Greeting.For(null, resolvedTemplate), null);
@@ -56,8 +116,31 @@ public static class Program
         return new ComposeResult(GreetingService.Core.Greeting.For(trimmedName, resolvedTemplate), null);
     }
 
-    public static int Run(string[] args, string? environmentTemplate, TextWriter output, TextWriter error)
+    public static int Run(string[] args, string? environmentTemplate, TextWriter output, TextWriter error) =>
+        Run(args, environmentTemplate, output, error, File.ReadAllLines);
+
+    public static int Run(string[] args, string? environmentTemplate, TextWriter output, TextWriter error, Func<string, string[]> readAllLines)
     {
+        ParseArgs(args, out _, out _, out var namesFile);
+
+        if (namesFile is not null)
+        {
+            var manyResult = ComposeMany(args, environmentTemplate, readAllLines);
+
+            if (manyResult.Error is not null)
+            {
+                error.WriteLine(manyResult.Error);
+                return 2;
+            }
+
+            foreach (var greeting in manyResult.Greetings)
+            {
+                output.WriteLine(greeting);
+            }
+
+            return 0;
+        }
+
         var result = Compose(args, environmentTemplate);
 
         if (result.Error is not null)
