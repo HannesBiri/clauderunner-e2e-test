@@ -12,7 +12,7 @@
     Bumping this version is what a ticket spanning both repositories has to wait for.
   -->
   <ItemGroup>
-    <PackageReference Include="Greeting.Tools.Core" Version="1.0.0" />
+    <PackageReference Include="Greeting.Tools.Core" Version="1.1.0" />
   </ItemGroup>
 
 </Project>
