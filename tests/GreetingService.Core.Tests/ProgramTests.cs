@@ -178,4 +178,51 @@ public class ProgramTests
         Assert.Equal("greet: a name must be 64 characters or fewer" + Environment.NewLine, error.ToString());
         Assert.Equal("", output.ToString());
     }
+
+    [Fact]
+    public void RejectsAGreetingTemplateWithNoPlaceholder()
+    {
+        var result = Program.Compose(["Hannes", "--greeting", "Good morning"], null);
+
+        Assert.Null(result.Greeting);
+        Assert.Equal("greet: a greeting template must contain {name}", result.Error);
+    }
+
+    [Fact]
+    public void RejectsAnEnvironmentTemplateWithNoPlaceholder()
+    {
+        var result = Program.Compose(["Hannes"], "Good morning");
+
+        Assert.Null(result.Greeting);
+        Assert.Equal("greet: a greeting template must contain {name}", result.Error);
+    }
+
+    [Fact]
+    public void RejectsAGreetingTemplateWithNoPlaceholderEvenWhenNoNameIsGiven()
+    {
+        var result = Program.Compose(["--greeting", "Good morning"], null);
+
+        Assert.Null(result.Greeting);
+        Assert.Equal("greet: a greeting template must contain {name}", result.Error);
+    }
+
+    [Fact]
+    public void FallsBackToTheDefaultTemplateWhenTheGreetingOptionIsEmptyOrWhitespace()
+    {
+        Assert.Equal("Hello, Hannes!", Program.Compose(["Hannes", "--greeting", ""], null).Greeting);
+        Assert.Equal("Hello, Hannes!", Program.Compose(["Hannes", "--greeting", "   "], null).Greeting);
+    }
+
+    [Fact]
+    public void RunRejectsAGreetingTemplateWithNoPlaceholderWithExitCode2AndNoStandardOutput()
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var exitCode = Program.Run(["Hannes", "--greeting", "Good morning"], null, output, error);
+
+        Assert.Equal(2, exitCode);
+        Assert.Equal("greet: a greeting template must contain {name}" + Environment.NewLine, error.ToString());
+        Assert.Equal("", output.ToString());
+    }
 }
