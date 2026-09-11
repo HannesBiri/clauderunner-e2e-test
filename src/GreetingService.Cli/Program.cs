@@ -6,6 +6,7 @@ public static class Program
 {
     private const string LetterOrDigitRequiredMessage = "greet: a name must contain at least one letter or digit";
     private const string NameTooLongMessage = "greet: a name must be 64 characters or fewer";
+    private const string TemplateMissingNamePlaceholderMessage = "greet: a --greeting template must contain {name}";
     private const int MaxNameLength = 64;
 
     public static ComposeResult Compose(string[] args) =>
@@ -30,6 +31,11 @@ public static class Program
             {
                 name = args[i];
             }
+        }
+
+        if (!string.IsNullOrWhiteSpace(template) && !template.Contains("{name}", StringComparison.Ordinal))
+        {
+            return new ComposeResult(null, TemplateMissingNamePlaceholderMessage);
         }
 
         var resolvedTemplate = template ?? environmentTemplate;
