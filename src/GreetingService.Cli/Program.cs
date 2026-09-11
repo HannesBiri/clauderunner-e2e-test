@@ -11,10 +11,14 @@ public static class Program
     public static ComposeResult Compose(string[] args) =>
         Compose(args, Environment.GetEnvironmentVariable("GREETING_TEMPLATE"));
 
-    public static ComposeResult Compose(string[] args, string? environmentTemplate)
+    public static ComposeResult Compose(string[] args, string? environmentTemplate) =>
+        Compose(args, environmentTemplate, File.ReadAllLines);
+
+    public static ComposeResult Compose(string[] args, string? environmentTemplate, Func<string, string[]> readAllLines)
     {
         string? name = null;
         string? template = null;
+        string? namesFile = null;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -26,6 +30,14 @@ public static class Program
                     i++;
                 }
             }
+            else if (args[i] == "--names-file")
+            {
+                if (i + 1 < args.Length)
+                {
+                    namesFile = args[i + 1];
+                    i++;
+                }
+            }
             else if (name is null)
             {
                 name = args[i];
@@ -33,6 +45,11 @@ public static class Program
         }
 
         var resolvedTemplate = template ?? environmentTemplate;
+
+        if (namesFile is not null)
+        {
+            return ComposeFromNamesFile(namesFile, resolvedTemplate, readAllLines);
+        }
 
         // `Greeting` is fully qualified throughout this method: the Greeting.Tools.Core package puts a `Greeting`
         // *namespace* in scope, which would otherwise win over the class of the same name.
@@ -56,9 +73,52 @@ public static class Program
         return new ComposeResult(GreetingService.Core.Greeting.For(trimmedName, resolvedTemplate), null);
     }
 
-    public static int Run(string[] args, string? environmentTemplate, TextWriter output, TextWriter error)
+    private static ComposeResult ComposeFromNamesFile(string path, string? resolvedTemplate, Func<string, string[]> readAllLines)
     {
-        var result = Compose(args, environmentTemplate);
+        string[] lines;
+
+        try
+        {
+            lines = readAllLines(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return new ComposeResult(null, $"greet: cannot read names file '{path}'");
+        }
+
+        var names = new List<string>();
+
+        foreach (var line in lines)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            var trimmedName = line.Trim();
+
+            if (!trimmedName.Any(char.IsLetterOrDigit))
+            {
+                return new ComposeResult(null, LetterOrDigitRequiredMessage);
+            }
+
+            if (trimmedName.Length > MaxNameLength)
+            {
+                return new ComposeResult(null, NameTooLongMessage);
+            }
+
+            names.Add(trimmedName);
+        }
+
+        return new ComposeResult(GreetingService.Core.GreetingBoard.For(names, resolvedTemplate), null);
+    }
+
+    public static int Run(string[] args, string? environmentTemplate, TextWriter output, TextWriter error) =>
+        Run(args, environmentTemplate, output, error, File.ReadAllLines);
+
+    public static int Run(string[] args, string? environmentTemplate, TextWriter output, TextWriter error, Func<string, string[]> readAllLines)
+    {
+        var result = Compose(args, environmentTemplate, readAllLines);
 
         if (result.Error is not null)
         {
