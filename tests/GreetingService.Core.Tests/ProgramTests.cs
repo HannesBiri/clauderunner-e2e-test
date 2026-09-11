@@ -228,6 +228,15 @@ public class ProgramTests
     }
 
     [Fact]
+    public void RejectsAnEmptyGreetingTemplate()
+    {
+        var result = Program.Compose(["Hannes", "--greeting", ""], null);
+
+        Assert.Null(result.Greeting);
+        Assert.Equal("greet: a --greeting template must contain {name}", result.Error);
+    }
+
+    [Fact]
     public void StillRendersAnEnvironmentTemplateWithNoNamePlaceholder()
     {
         Assert.Equal("Good morning", Program.Compose(["Hannes"], "Good morning").Greeting);
