@@ -10,5 +10,7 @@ public static class GreetingBoard
     /// <see cref="TextTable"/> so every caller lays the columns out the same way.
     /// </summary>
     public static string For(IEnumerable<string> names, string? template = null) =>
-        TextTable.Render(names.Select(name => (IReadOnlyList<string>)[name, Greeting.For(name, template)]));
+        TextTable.Render(
+            ["Name", "Greeting"],
+            names.Select(name => (IReadOnlyList<string>)[name, Greeting.For(name, template)]));
 }
