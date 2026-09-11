@@ -7,8 +7,9 @@ public static class GreetingBoard
 {
     /// <summary>
     /// A row per name — the name, then the greeting it produces — rendered by
-    /// <see cref="TextTable"/> so every caller lays the columns out the same way.
+    /// <see cref="TextTable"/> so every caller lays the columns out the same way,
+    /// with "Name" and "Greeting" headed above the rows.
     /// </summary>
     public static string For(IEnumerable<string> names, string? template = null) =>
-        TextTable.Render(names.Select(name => (IReadOnlyList<string>)[name, Greeting.For(name, template)]));
+        TextTable.Render(["Name", "Greeting"], names.Select(name => (IReadOnlyList<string>)[name, Greeting.For(name, template)]));
 }
