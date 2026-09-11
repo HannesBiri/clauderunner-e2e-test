@@ -178,4 +178,62 @@ public class ProgramTests
         Assert.Equal("greet: a name must be 64 characters or fewer" + Environment.NewLine, error.ToString());
         Assert.Equal("", output.ToString());
     }
+
+    [Fact]
+    public void RejectsAGreetingOptionTemplateWithNoNamePlaceholder()
+    {
+        var result = Program.Compose(["Hannes", "--greeting", "Good morning"], null);
+
+        Assert.Null(result.Greeting);
+        Assert.Equal("greet: a --greeting template must contain {name}", result.Error);
+    }
+
+    [Fact]
+    public void RejectsAnEnvironmentTemplateWithNoNamePlaceholder()
+    {
+        var result = Program.Compose(["Hannes"], "Good morning");
+
+        Assert.Null(result.Greeting);
+        Assert.Equal("greet: a --greeting template must contain {name}", result.Error);
+    }
+
+    [Fact]
+    public void RejectsAGreetingOptionTemplateWithNoNamePlaceholderEvenWithNoNameArgument()
+    {
+        var result = Program.Compose(["--greeting", "Good morning"], null);
+
+        Assert.Null(result.Greeting);
+        Assert.Equal("greet: a --greeting template must contain {name}", result.Error);
+    }
+
+    [Fact]
+    public void AcceptsANullTemplateAndFallsBackToTheDefaultGreeting()
+    {
+        Assert.Equal("Hello, Hannes!", Program.Compose(["Hannes"], null).Greeting);
+    }
+
+    [Fact]
+    public void AcceptsAnEmptyTemplateAndFallsBackToTheDefaultGreeting()
+    {
+        Assert.Equal("Hello, Hannes!", Program.Compose(["Hannes", "--greeting", ""], null).Greeting);
+    }
+
+    [Fact]
+    public void AcceptsAWhitespaceOnlyTemplateAndFallsBackToTheDefaultGreeting()
+    {
+        Assert.Equal("Hello, Hannes!", Program.Compose(["Hannes", "--greeting", "   "], null).Greeting);
+    }
+
+    [Fact]
+    public void RunRejectsATemplateWithNoNamePlaceholderWithExitCode2AndNoStandardOutput()
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var exitCode = Program.Run(["Hannes", "--greeting", "Good morning"], null, output, error);
+
+        Assert.Equal(2, exitCode);
+        Assert.Equal("greet: a --greeting template must contain {name}" + Environment.NewLine, error.ToString());
+        Assert.Equal("", output.ToString());
+    }
 }

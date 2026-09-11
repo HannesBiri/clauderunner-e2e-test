@@ -6,6 +6,7 @@ public static class Program
 {
     private const string LetterOrDigitRequiredMessage = "greet: a name must contain at least one letter or digit";
     private const string NameTooLongMessage = "greet: a name must be 64 characters or fewer";
+    private const string TemplateNeedsNameMessage = "greet: a --greeting template must contain {name}";
     private const int MaxNameLength = 64;
 
     public static ComposeResult Compose(string[] args) =>
@@ -33,6 +34,11 @@ public static class Program
         }
 
         var resolvedTemplate = template ?? environmentTemplate;
+
+        if (!string.IsNullOrWhiteSpace(resolvedTemplate) && !resolvedTemplate.Contains("{name}", StringComparison.Ordinal))
+        {
+            return new ComposeResult(null, TemplateNeedsNameMessage);
+        }
 
         // `Greeting` is fully qualified throughout this method: the Greeting.Tools.Core package puts a `Greeting`
         // *namespace* in scope, which would otherwise win over the class of the same name.
