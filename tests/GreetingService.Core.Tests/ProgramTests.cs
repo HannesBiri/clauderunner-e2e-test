@@ -219,9 +219,12 @@ public class ProgramTests
     }
 
     [Fact]
-    public void StillFallsBackToTheDefaultTemplateWhenTheGreetingOptionIsWhitespaceOnly()
+    public void RejectsAWhitespaceOnlyGreetingTemplate()
     {
-        Assert.Equal("Hello, Hannes!", Program.Compose(["Hannes", "--greeting", "   "], null).Greeting);
+        var result = Program.Compose(["Hannes", "--greeting", "   "], null);
+
+        Assert.Null(result.Greeting);
+        Assert.Equal("greet: a --greeting template must contain {name}", result.Error);
     }
 
     [Fact]

@@ -33,7 +33,7 @@ public static class Program
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(template) && !template.Contains("{name}", StringComparison.Ordinal))
+        if (template is not null && !template.Contains("{name}", StringComparison.Ordinal))
         {
             return new ComposeResult(null, TemplateMissingNamePlaceholderMessage);
         }
