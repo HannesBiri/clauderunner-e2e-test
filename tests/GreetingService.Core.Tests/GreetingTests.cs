@@ -18,10 +18,20 @@ public class GreetingTests
         Assert.Equal(expected, Greeting.For(name));
     }
 
-    [Fact]
-    public void RendersAnExplicitTemplateWithTheGivenName()
+    [Theory]
+    [InlineData("Hi, {name}!!", "Hi, Hannes!!")]
+    [InlineData("Hi, {Name}!!", "Hi, Hannes!!")]
+    [InlineData("HI, {NAME}!!", "HI, Hannes!!")]
+    [InlineData("Hi, {nAmE}!!", "Hi, Hannes!!")]
+    public void RendersAnExplicitTemplateWithTheGivenName(string template, string expected)
     {
-        Assert.Equal("Hi, Hannes!!", Greeting.For("Hannes", "Hi, {name}!!"));
+        Assert.Equal(expected, Greeting.For("Hannes", template));
+    }
+
+    [Fact]
+    public void KeepsTheCallerSCasingOfTheSubstitutedName()
+    {
+        Assert.Equal("Hi, McDonald!!", Greeting.For("McDonald", "Hi, {NAME}!!"));
     }
 
     [Fact]
