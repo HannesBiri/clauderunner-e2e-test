@@ -20,6 +20,6 @@ public static class Greeting
     {
         var resolvedTemplate = string.IsNullOrWhiteSpace(template) ? DefaultTemplate : template;
         var resolvedName = string.IsNullOrWhiteSpace(name) ? DefaultName : name.Trim();
-        return resolvedTemplate.Replace("{name}", resolvedName, StringComparison.Ordinal);
+        return resolvedTemplate.Replace("{name}", resolvedName, StringComparison.OrdinalIgnoreCase);
     }
 }
